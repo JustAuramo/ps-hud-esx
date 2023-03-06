@@ -1,7 +1,7 @@
-###ESX VERSION OF THE PS-HUD! 
+##ESX VERSION OF THE PS-HUD! 
 
 
-###CREDITS: 
+##CREDITS: 
 https://github.com/Project-Sloth
 
 https://discord.gg/projectsloth
