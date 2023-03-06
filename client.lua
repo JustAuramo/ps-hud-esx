@@ -1,5 +1,5 @@
-local QBCore = exports['qb-core']:GetCoreObject()
-local PlayerData = QBCore.Functions.GetPlayerData()
+ESX = exports["es_extended"]:getSharedObject()
+local PlayerData = ESX.GetPlayerData()
 local config = Config
 local UIConfig = UIConfig
 local speedMultiplier = config.UseMPH and 2.23694 or 3.6
@@ -72,23 +72,23 @@ local function CinematicShow(bool)
     end
 end
 
-local function hasHarness()
-    local ped = PlayerPedId()
-    if not IsPedInAnyVehicle(ped, false) then return end
-
-    local _harness = false
-    local hasHarness = exports['qb-smallresources']:HasHarness()
-    if hasHarness then
-        _harness = true
-    else
-        _harness = false
-    end
-
-    harness = _harness
-end
+--local function hasHarness()
+--    local ped = PlayerPedId()
+--    if not IsPedInAnyVehicle(ped, false) then return end
+--
+--    local _harness = false
+--    local hasHarness = exports['qb-smallresources']:HasHarness()
+--    if hasHarness then
+--        _harness = true
+--    else
+--        _harness = false
+--    end
+--
+--    harness = _harness
+--end
 
 local function loadSettings()
-    QBCore.Functions.Notify(Lang:t("notify.hud_settings_loaded"), "success")
+    ESX.ShowNotification(_U("hud_settings_loaded"), "success")
     Wait(1000)
     TriggerEvent("hud:client:LoadMap")
 end
@@ -112,7 +112,7 @@ local function sendUIUpdateMessage(data)
 end
 
 local function HandleSetupResource()
-    QBCore.Functions.TriggerCallback('hud:server:getRank', function(isAdminOrGreater)
+    ESX.TriggerServerCallback('hud:server:getRank', function(isAdminOrGreater)
         if isAdminOrGreater then
             admin = true
         else
@@ -128,27 +128,39 @@ local function HandleSetupResource()
     end
 end
 
-RegisterNetEvent("QBCore:Client:OnPlayerLoaded", function()
+RegisterNetEvent('esx:playerLoaded')
+AddEventHandler('esx:playerLoaded', function(xPlayer)
+    ESX.PlayerLoaded = true
+end)
+
+AddEventHandler('esx:onPlayerSpawn', function()
+            while not ESX.PlayerLoaded do
+                Wait(1000)
+            end
     Wait(2000)
     HandleSetupResource()
     -- local hudSettings = GetResourceKvpString('hudSettings')
     -- if hudSettings then loadSettings(json.decode(hudSettings)) end
     loadSettings()
-    PlayerData = QBCore.Functions.GetPlayerData()
+    PlayerData = ESX.GetPlayerData()
 end)
 
-RegisterNetEvent("QBCore:Client:OnPlayerUnload", function()
+
+RegisterNetEvent('esx:onPlayerLogout')
+AddEventHandler('esx:onPlayerLogout', function()
+    ESX.PlayerLoaded = false
     PlayerData = {}
     admin = false
     SendAdminStatus()
 end)
 
-RegisterNetEvent("QBCore:Player:SetPlayerData", function(val)
-    PlayerData = val
-end)
+--RegisterNetEvent("QBCore:Player:SetPlayerData", function(val)
+--    PlayerData = val
+--end)
 
 -- Event Handlers
 AddEventHandler('onResourceStart', function(resourceName)
+    ESX.PlayerLoaded = true
     if GetCurrentResourceName() ~= resourceName then return end
     Wait(1000)
 
@@ -180,12 +192,12 @@ RegisterNUICallback('closeMenu', function(_, cb)
     SetNuiFocus(false, false)
 end)
 
-RegisterKeyMapping('menu', Lang:t('info.open_menu'), 'keyboard', Config.OpenMenu)
+RegisterKeyMapping('menu', _U('open_menu'), 'keyboard', Config.OpenMenu)
 
 -- Reset hud
 local function restartHud()
     TriggerEvent("hud:client:playResetHudSounds")
-    QBCore.Functions.Notify(Lang:t("notify.hud_restart"), "error")
+    ESX.ShowNotification(_U("hud_restart"), "error")
     Wait(1500)
     if IsPedInAnyVehicle(PlayerPedId()) then
         SendNUIMessage({
@@ -214,7 +226,7 @@ local function restartHud()
         show = true,
     })
     Wait(500)
-    QBCore.Functions.Notify(Lang:t("notify.hud_start"), "success")
+    ESX.ShowNotification(_U("hud_start"), "success")
     SendNUIMessage({
         action = 'menu',
         topic = 'restart',
@@ -243,7 +255,7 @@ RegisterNetEvent("hud:client:resetStorage", function()
     if Menu.isResetSoundsChecked then
         TriggerServerEvent("InteractSound_SV:PlayOnSource", "airwrench", 0.1)
     end
-    QBCore.Functions.TriggerCallback('hud:server:getMenu', function(menu) loadSettings(menu); SetResourceKvp('hudSettings', json.encode(menu)) end)
+    ESX.TriggerServerCallback('hud:server:getMenu', function(menu) loadSettings(menu); SetResourceKvp('hudSettings', json.encode(menu)) end)
 end)
 
 -- Notifications
@@ -413,7 +425,7 @@ RegisterNetEvent("hud:client:LoadMap", function()
             Wait(150)
         end
         if Menu.isMapNotifChecked then
-            QBCore.Functions.Notify(Lang:t("notify.load_square_map"))
+            ESX.ShowNotification(_U("load_square_map"))
         end
         SetMinimapClipType(0)
         AddReplaceTexture("platform:/textures/graphics", "radarmasksm", "squaremap", "radarmasksm")
@@ -442,7 +454,7 @@ RegisterNetEvent("hud:client:LoadMap", function()
         end
         Wait(1200)
         if Menu.isMapNotifChecked then
-            QBCore.Functions.Notify(Lang:t("notify.loaded_square_map"))
+            ESX.ShowNotification(_U("loaded_square_map"))
         end
     elseif Menu.isToggleMapShapeChecked == "circle" then
         RequestStreamedTextureDict("circlemap", false)
@@ -450,7 +462,7 @@ RegisterNetEvent("hud:client:LoadMap", function()
             Wait(150)
         end
         if Menu.isMapNotifChecked then
-            QBCore.Functions.Notify(Lang:t("notify.load_circle_map"))
+            ESX.ShowNotification(_U("load_circle_map"))
         end
         SetMinimapClipType(1)
         AddReplaceTexture("platform:/textures/graphics", "radarmasksm", "circlemap", "radarmasksm")
@@ -479,7 +491,7 @@ RegisterNetEvent("hud:client:LoadMap", function()
         end
         Wait(1200)
         if Menu.isMapNotifChecked then
-            QBCore.Functions.Notify(Lang:t("notify.loaded_circle_map"))
+            ESX.ShowNotification(_U("loaded_circle_map"))
         end
     end
 end)
@@ -579,12 +591,12 @@ RegisterNUICallback('cinematicMode', function(data, cb)
     if data.checked then
         CinematicShow(true)
         if Menu.isCinematicNotifChecked then
-            QBCore.Functions.Notify(Lang:t("notify.cinematic_on"))
+            ESX.ShowNotification(_U("cinematic_on"))
         end
     else
         CinematicShow(false)
         if Menu.isCinematicNotifChecked then
-            QBCore.Functions.Notify(Lang:t("notify.cinematic_off"), 'error')
+            ESX.ShowNotification(_U("cinematic_off"), 'error')
         end
         local player = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(player)
@@ -621,6 +633,19 @@ end)
 
 RegisterNetEvent('hud:client:ToggleAirHud', function()
     showAltitude = not showAltitude
+end)
+
+CreateThread(function()
+    while true do
+        Wait(500)
+        if ESX.PlayerLoaded then
+            TriggerEvent('esx_status:getStatus', 'hunger',
+                    function(status) hunger = status.val / 10000 end)
+            TriggerEvent('esx_status:getStatus', 'thirst',
+                    function(status) thirst = status.val / 10000 end)
+            TriggerEvent('hud:client:UpdateNeeds', hunger, thirst)
+        end
+    end
 end)
 
 RegisterNetEvent('hud:client:UpdateNeeds', function(newHunger, newThirst) -- Triggered in qb-core
@@ -727,14 +752,14 @@ RegisterCommand('+engine', function()
     local vehicle = GetVehiclePedIsIn(PlayerPedId(), false)
     if vehicle == 0 or GetPedInVehicleSeat(vehicle, -1) ~= PlayerPedId() then return end
     if GetIsVehicleEngineRunning(vehicle) then
-        QBCore.Functions.Notify(Lang:t("notify.engine_off"))
+        ESX.ShowNotification(_U("engine_off"))
     else
-        QBCore.Functions.Notify(Lang:t("notify.engine_on"))
+        ESX.ShowNotification(_U("engine_on"))
     end
     SetVehicleEngineOn(vehicle, not GetIsVehicleEngineRunning(vehicle), false, true)
 end)
 
-RegisterKeyMapping('+engine', Lang:t('info.toggle_engine'), 'keyboard', 'G')
+RegisterKeyMapping('+engine', _U('toggle_engine'), 'keyboard', 'G')
 
 local function IsWhitelistedWeaponArmed(weapon)
     if weapon then
@@ -868,7 +893,7 @@ end
 CreateThread(function()
     local wasInVehicle = false
     while true do        
-        if LocalPlayer.state.isLoggedIn then
+        if ESX.PlayerLoaded then
             Wait(500)
 
             local show = true
@@ -886,7 +911,7 @@ CreateThread(function()
                 end
             end
 
-            playerDead = IsEntityDead(player) or PlayerData.metadata["inlaststand"] or PlayerData.metadata["isdead"] or false
+            playerDead = IsEntityDead(player) or false
             parachute = GetPedParachuteState(player)
 
             -- Stamina
@@ -902,8 +927,10 @@ CreateThread(function()
             -- Voice setup            
             local talking = NetworkIsPlayerTalking(playerId)
             local voice = 0
-            if LocalPlayer.state['proximity'] then
-                voice = LocalPlayer.state['proximity'].distance
+            local plyState = LocalPlayer.state
+            local proximity = plyState.proximity
+            if proximity.distance then
+                voice = proximity.distance
                 -- Player enters server with Voice Chat off, will not have a distance (nil)
                 if voice == nil then
                     voice = 0
@@ -915,7 +942,6 @@ CreateThread(function()
             end
 
             local vehicle = GetVehiclePedIsIn(player)
-
             if not (IsPedInAnyVehicle(player) and not IsThisModelABicycle(vehicle)) then
                 updatePlayerHud({
                     show,
@@ -1033,13 +1059,13 @@ end
 -- Low fuel
 CreateThread(function()
     while true do
-        if LocalPlayer.state.isLoggedIn then
+        if ESX.PlayerLoaded then
             local ped = PlayerPedId()
             if IsPedInAnyVehicle(ped, false) and not IsThisModelABicycle(GetEntityModel(GetVehiclePedIsIn(ped, false))) and not isElectric(GetVehiclePedIsIn(ped, false)) then
                 if exports[Config.FuelScript]:GetFuel(GetVehiclePedIsIn(ped, false)) <= 20 then -- At 20% Fuel Left
                     if Menu.isLowFuelChecked then
                         TriggerServerEvent("InteractSound_SV:PlayOnSource", "pager", 0.10)
-                        QBCore.Functions.Notify(Lang:t("notify.low_fuel"), "error")
+                        ESX.ShowNotification(_U("low_fuel"), "error")
                         Wait(60000) -- repeats every 1 min until empty
                     end
                 end
@@ -1085,10 +1111,10 @@ end)
 CreateThread(function()
     while true do
         Wait(1500)
-        if LocalPlayer.state.isLoggedIn then
+        if ESX.PlayerLoaded then
             local ped = PlayerPedId()
             if IsPedInAnyVehicle(ped, false) then
-                hasHarness()
+
                 local veh = GetEntityModel(GetVehiclePedIsIn(ped, false))
                 if seatbeltOn ~= true and IsThisModelACar(veh) then
                     TriggerEvent("InteractSound_CL:PlayOnOne", "beltalarm", 0.6)
@@ -1103,7 +1129,7 @@ end)
 
 CreateThread(function() -- Speeding
     while true do
-        if LocalPlayer.state.isLoggedIn then
+        if ESX.PlayerLoaded then
             local ped = PlayerPedId()
             if IsPedInAnyVehicle(ped, false) then
                 local speed = GetEntitySpeed(GetVehiclePedIsIn(ped, false)) * speedMultiplier
@@ -1130,7 +1156,7 @@ end
 
 CreateThread(function() -- Shooting
     while true do
-        if LocalPlayer.state.isLoggedIn then
+        if ESX.PlayerLoaded then
             local ped = PlayerPedId()
             local weapon = GetSelectedPedWeapon(ped)
             if weapon ~= `WEAPON_UNARMED` then
@@ -1173,7 +1199,7 @@ end
 
 CreateThread(function()
     while true do
-        if LocalPlayer.state.isLoggedIn then
+        if ESX.PlayerLoaded then
             local ped = PlayerPedId()
             local effectInterval = GetEffectInterval(stress)
             if stress >= 100 then
@@ -1292,7 +1318,7 @@ CreateThread(function()
     local lastIsOutCompassCheck = Menu.isOutCompassChecked
     local lastInVehicle = false
 	while true do
-        if LocalPlayer.state.isLoggedIn then
+        if ESX.PlayerLoaded then
             Wait(400)
             local show = true
             local player = PlayerPedId()
